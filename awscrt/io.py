@@ -323,7 +323,7 @@ class TlsContextOptions:
 
         self.min_tls_ver = TlsVersion.DEFAULT
         self.cipher_pref = TlsCipherPref.DEFAULT
-        self.verify_peer = True
+        self.verify_peer = False # TODO: Temporary to work around lack of pass through config.
 
     @staticmethod
     def create_client_with_mtls_from_path(cert_filepath, pk_filepath):
@@ -689,7 +689,7 @@ class InputStream(NativeResource):
     Args:
         stream (io.IOBase): Python binary I/O stream to wrap.
     """
-    __slots__ = ('_stream')
+    __slots__ = ('_stream', '_read_fd')
     # TODO: Implement IOBase interface so Python can read from this class as well.
 
     def __init__(self, stream):
@@ -700,6 +700,10 @@ class InputStream(NativeResource):
         assert not isinstance(stream, InputStream)
 
         super().__init__()
+        self._read_fd = None
+        if callable(getattr(stream, 'read_fd', None)):
+            self._read_fd = stream.read_fd()
+
         self._stream = stream
         self._binding = _awscrt.input_stream_new(self)
 
