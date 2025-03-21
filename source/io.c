@@ -773,7 +773,7 @@ int s_aws_input_stream_py_read(struct aws_input_stream *stream, struct aws_byte_
     }
 
     // Get the _read_fd attribute
-    PyObject *read_fd_attr = PyObject_GetAttrString(impl->py_self, "_read_fd");
+    PyObject *read_fd_attr = PyObject_GetAttrString(impl->py_self, "read_fd");
     if (!read_fd_attr) {
         PyErr_Clear();  // Clear the error if attribute doesn't exist
     } else {

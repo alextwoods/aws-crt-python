@@ -751,6 +751,29 @@ class InputStream(NativeResource):
             return stream
         return cls(stream)
 
+class PipeInputStream(InputStream):
+    """PipeInputStream allows `awscrt` native code to read from Python binary I/O classes using a pipe.
+
+    Args:
+        stream: Python binary I/O stream to wrap - must implement read_fd()
+    """
+
+    def __init__(self, stream):
+        # duck-type instead of checking inheritance
+        # At the least, stream must have read_fd()
+        if not callable(getattr(stream, 'read', None)):
+            raise TypeError('I/O stream type expected')
+        assert not isinstance(stream, InputStream)
+
+        super().__init__(stream)
+
+        if not getattr(stream, 'read_fd', None):
+            raise TypeError('Stream must implement read_fd()')
+
+    @property
+    def read_fd(self):
+        """Returns the readable file descriptor associated with the stream."""
+        return self._stream.read_fd
 
 class Pkcs11Lib(NativeResource):
     """
