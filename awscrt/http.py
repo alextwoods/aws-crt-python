@@ -11,8 +11,10 @@ import _awscrt
 from concurrent.futures import Future
 from awscrt import NativeResource
 import awscrt.exceptions
-from awscrt.io import ClientBootstrap, InputStream, TlsConnectionOptions, SocketOptions
+from awscrt.io import ClientBootstrap, InputStream, PipeInputStream, TlsConnectionOptions, SocketOptions
 from enum import IntEnum
+
+PipeInputStream # noqa - export from this module
 
 
 class HttpVersion(IntEnum):

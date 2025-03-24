@@ -772,6 +772,35 @@ int s_aws_input_stream_py_read(struct aws_input_stream *stream, struct aws_byte_
         return AWS_OP_ERR; /* Python has shut down. Nothing matters anymore, but don't crash */
     }
 
+    // Get the _read_fd attribute
+    PyObject *read_fd_attr = PyObject_GetAttrString(impl->py_self, "read_fd");
+    if (!read_fd_attr) {
+        PyErr_Clear();  // Clear the error if attribute doesn't exist
+    } else {
+        ssize_t bytesRead = 0;
+        if (PyLong_Check(read_fd_attr)) {
+            long read_fd = PyLong_AsLong(read_fd_attr);
+            Py_DECREF(read_fd_attr);
+
+            PyGILState_Release(state);
+
+            size_t available = dest->capacity - dest->len;
+            char *mem_start = (char *)(dest->buffer + dest->len);
+            bytesRead = read(read_fd, mem_start, available);
+        
+            if (bytesRead == 0) {
+                impl->is_end_of_stream = true;
+                close(read_fd);
+            } else {
+                dest->len += bytesRead;
+            }
+
+            // memory_view and method_result have not been allocated, no need to clean them up.
+            return aws_result;
+        }
+    }
+    Py_XDECREF(read_fd_attr);
+
     memory_view = aws_py_memory_view_from_byte_buffer(dest);
     if (!memory_view) {
         aws_result = aws_py_raise_error();
